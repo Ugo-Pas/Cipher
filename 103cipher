@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+##
+## EPITECH PROJECT, 2025
+## 103cipher
+## File description:
+## 103cipher
+##
+
+from math import ceil, sqrt
+import sys
+
+def error(argv):
+    flag = int(argv[3])
+    message = argv[1]
+    key = argv[2]
+    if (flag != 0 and flag != 1)   :
+        print(f"flags {flag} does not exist 1 for encryption and 0 for decryption")
+        exit(84)
+
+def cal_matrix(a,b):
+    result = [[0 for _ in range(len(b[0]))] for _ in range(len(a))]
+    for i in range(len(a)):
+        for j in range(len(b[0])):
+            for k in range(len(a[0])):
+                result[i][j] += a[i][k] * b[k][j]
+    return result
+
+def cal_inv_matrix(m):
+    
+    if(len(m) ==1):
+        detm = m[0][0]
+        if (detm == 0):
+            exit(84)
+        inverse = [[1/detm]]
+        return inverse
+    elif len(m[0]) == 2:
+        detm = m[0][0] * m[1][1] - m[0][1] * m[1][0]
+        if detm == 0:
+            exit(84)
+        inverse = [
+        [ m[1][1] / detm, -m[0][1] / detm ],
+        [-m[1][0] / detm,  m[0][0] / detm ]
+        ]
+        return inverse
+
+    if (len(m[0]) == 3): 
+        return inverse_3x3(m)
+
+def inverse_3x3(m):
+    det = (m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+           m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+           m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]))
+    if det == 0:
+        exit(84)
+    cof = [
+        [(m[1][1]*m[2][2] - m[1][2]*m[2][1]), -(m[1][0]*m[2][2] - m[1][2]*m[2][0]),  (m[1][0]*m[2][1] - m[1][1]*m[2][0])],
+        [-(m[0][1]*m[2][2] - m[0][2]*m[2][1]), (m[0][0]*m[2][2] - m[0][2]*m[2][0]), -(m[0][0]*m[2][1] - m[0][1]*m[2][0])],
+        [(m[0][1]*m[1][2] - m[0][2]*m[1][1]), -(m[0][0]*m[1][2] - m[0][2]*m[1][0]),  (m[0][0]*m[1][1] - m[0][1]*m[1][0])]
+    ]
+    adj = [
+        [cof[0][0], cof[1][0], cof[2][0]],
+        [cof[0][1], cof[1][1], cof[2][1]],
+        [cof[0][2], cof[1][2], cof[2][2]]
+    ]
+    inv = [[adj[i][j] / det for j in range(3)] for i in range(3)]
+    return inv
+
+def norm_det(det):
+    if det < 0:
+        det *= -1
+        return det
+    if det >= 0:
+        return det 
+
+def key_matrix(key):
+    ascii_list = [ord(c) for c in key]
+    if (len(key) == 1):
+        matrix_key=[ascii_list]
+        return matrix_key
+    elif (len(key) <=4):
+        matrix_key = [[0, 0],[0, 0]]
+        idx = 0
+        for i in range(2):
+            for j in range(2):
+                if idx < len(ascii_list):
+                    matrix_key[i][j] = ascii_list[idx]
+                    idx += 1
+        return matrix_key
+    elif (len(key) <= 9):
+        matrix_key = [[0, 0, 0],[0, 0, 0],[0, 0, 0]]
+        idx = 0
+        for i in range(3):
+            for j in range(3):
+                if idx < len(ascii_list):
+                    matrix_key[i][j] = ascii_list[idx]
+                    idx += 1
+        return matrix_key
+
+def message_matrix(message, matrix_key):
+    ascii_list = [ord(c) for c in message]
+    if (len(matrix_key) == 1):
+        matrix_message = [[0] for _ in range(ceil(len(message)))]
+        idx = 0
+        for i in range(len(matrix_message)):
+            for j in range(1):
+                if idx < len(ascii_list):
+                    matrix_message[i][j] = ascii_list[idx]
+                    idx += 1
+        return matrix_message
+    elif (len(matrix_key) ==2):
+        matrix_message = [[0, 0] for _ in range(ceil(len(message)/2))]
+        idx = 0
+        for i in range(len(matrix_message)):
+            for j in range(2):
+                if idx < len(ascii_list):
+                    matrix_message[i][j] = ascii_list[idx]
+                    idx += 1
+        return matrix_message
+    elif (len(matrix_key) ==3):
+        matrix_message = [[0, 0, 0] for _ in range(ceil(len(message)/3))]
+        idx = 0
+        for i in range(len(matrix_message)):
+            for j in range(3):
+                if idx < len(ascii_list):
+                    matrix_message[i][j] = ascii_list[idx]
+                    idx += 1
+        return matrix_message
+
+def main (argv):
+    ac = len(argv)
+    if (ac == 2 and argv[1] == "-h"):
+        print("USAGE")
+        print("     ./103cipher message key flag\n")
+        print("DESCRIPTION")
+        print("     message  a message, made of ASCII characters")
+        print("     key      the encryption key, made of ASCII characters")
+        print("     flag     0 for the message to be encrypted, 1 to be decrypted")
+        return 0
+    if ( ac == 4):
+        error(argv)
+        key = argv[2]
+        flag = int(argv[3])
+        matrix_key = key_matrix(key)
+        print("Key matrix:")
+        if (flag == 0):
+            Encrypted_message(matrix_key, argv[1])
+            return 0
+        if (flag == 1):
+            Decrypted_message(matrix_key, argv[1])
+            return 0
+        else:
+            print("the the flags are incorrect")
+            return 84
+    else:
+        print(f"You need 4 ARGV, but there are {ac}")
+        exit(84)
+
+def Encrypted_message (matrix_key, message):
+    matrix_message = message_matrix(message, matrix_key)
+    result = cal_matrix(matrix_message, matrix_key)
+    for i in range(len(matrix_key)):
+        print(*matrix_key[i])
+    print("\nEncrypted message:")
+    output = ''
+    for i in range(len(matrix_message)):
+        for j in range(len(matrix_message[0])):
+            output += f"{result[i][j]}" + ' '
+    print(output[:-1])       
+
+def Decrypted_message(matrix_key, message):
+    matrix_message = string_to_matrix(message, len(matrix_key))
+    key_inv = cal_inv_matrix(matrix_key)
+    result = cal_matrix(matrix_message, key_inv)
+    str = float_matrix_to_ascii_string(result)
+    for i in range(len(key_inv)):
+        for j in range(len(key_inv[0])):
+            print(format(key_inv[i][j],",.3f"), end=' ')
+        print("")
+    print("\nDecrypted message:")
+    print(str)
+
+def float_matrix_to_ascii_string(matrix):
+    resultat = ""
+    for ligne in matrix:
+        for val in ligne:
+            n = int(round(val))  
+            if n >= 0:  
+                resultat += chr(n)
+    return resultat
+
+def string_to_matrix(s, k):
+    nombres = [int(x) for x in s.split()]
+    return [nombres[i:i+k] for i in range(0, len(nombres), k)]
+
+main(sys.argv)
